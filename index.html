@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eretic3</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @font-face {
+            font-family: 'BAHNSCHRIFT';
+            src: url('BAHNSCHRIFT.TTF') format('truetype');
+        }
+        .video-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+        .content-layer {
+            position: relative;
+            z-index: 1;
+        }
+        .nav-link {
+            position: relative;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 1px;
+            bottom: -2px;
+            left: 0;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        .team-card {
+            perspective: 1000px;
+            height: 400px;
+        }
+        .team-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        .team-card:hover .team-card-inner {
+            transform: rotateY(180deg);
+        }
+        .team-card-front, .team-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 0.5rem;
+        }
+        .team-card-back {
+            transform: rotateY(180deg);
+            background-color: #000;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            text-align: center;
+            border-radius: 3rem;
+        }
+        .hero-text {
+            font-size: 3rem;
+            line-height: 1.1;
+            letter-spacing: 0em;
+        }
+        .small-hero-text {
+            font-size: 1.5rem;
+            line-height: 1.3;
+            letter-spacing: 0em;
+        }
+        .circle-button {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid white;
+            cursor: pointer;
+        }
+        .circle-button.small {
+            width: 100px;
+            height: 100px;
+        }
+        .circle-button:hover {
+            transform: scale(1.1);
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal.active {
+            display: flex;
+            opacity: 1;
+        }
+        .modal-content {
+            background-color: #1a1a1a;
+            padding: 4rem;
+            border-radius: 3rem;
+            max-width: 48rem;
+            margin: 1rem;
+            position: relative;
+            transform: scale(0.9);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        .modal.active .modal-content {
+            transform: scale(1);
+            opacity: 1;
+        }
+        .service-card {
+            transition: transform 0.3s ease;
+        }
+        .service-card:hover {
+            transform: scale(1.05);
+        }
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 20px;
+            cursor: pointer;
+        }
+        .hamburger span {
+            width: 100%;
+            height: 2px;
+            background-color: white;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 768px) {
+            .hero-text {
+                font-size: 2rem;
+            }
+            .small-hero-text {
+                font-size: 1rem;
+            }
+            .hamburger {
+                display: flex;
+            }
+            .nav-menu {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.95);
+                padding: 2rem;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+                gap: 2rem;
+            }
+            .nav-menu.active {
+                display: flex;
+            }
+            .nav-menu.active + .hamburger span:nth-child(1) {
+                transform: translateY(9px) rotate(45deg);
+            }
+            .nav-menu.active + .hamburger span:nth-child(2) {
+                opacity: 0;
+            }
+            .nav-menu.active + .hamburger span:nth-child(3) {
+                transform: translateY(-9px) rotate(-45deg);
+            }
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'brand-pink': '#FF69B4',
+                        'brand-green': '#00FF9D',
+                    },
+                    fontFamily: {
+                        'bahnschrift': ['BAHNSCHRIFT', 'sans-serif']
+                    }
+                }
+            }
+        }
+
+        // Modal functionality
+        function openModal(serviceTitle, serviceDesc, keywords) {
+            const modal = document.createElement('div');
+            modal.className = 'modal flex items-center justify-center';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <button onclick="this.closest('.modal').remove()" class="absolute top-6 right-6 text-white text-3xl">&times;</button>
+                    <h2 class="text-xl uppercase mb-6">${serviceTitle}</h2>
+                    <p class="text-gray-400 text-lg mb-8 leading-relaxed">${serviceDesc}</p>
+                    <div class="flex flex-wrap gap-3">
+                        ${keywords.map(keyword => `<span class="bg-brand-green text-black px-4 py-2 rounded-full text-lg">${keyword}</span>`).join('')}
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            setTimeout(() => modal.classList.add('active'), 10);
+
+            // Add escape key listener
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    modal.remove();
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
+            modal.addEventListener('remove', () => {
+                document.removeEventListener('keydown', handleEscape);
+            });
+        }
+
+        // Mobile menu functionality
+        function toggleMenu() {
+            const menu = document.querySelector('.nav-menu');
+            menu.classList.toggle('active');
+        }
+    </script>
+</head>
+<body class="bg-black text-white font-bahnschrift">
+    <!-- Sticky Navigation -->
+    <nav class="fixed top-0 left-0 w-full z-50 bg-opacity-90 backdrop-blur-sm">
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-4">
+                <div class="w-32">
+                    <img src="img/logo.png" alt="Logo" class="w-full">
+                </div>
+                <div class="nav-menu flex items-center space-x-8 text-lg uppercase tracking-wider">
+                    <a href="#hero" class="nav-link">Home</a>
+                    <a href="#mission" class="nav-link">Services</a>
+                    <a href="#team" class="nav-link">Team</a>
+                    <a href="#contact" class="nav-link">Contact</a>
+                </div>
+                <div class="hamburger" onclick="toggleMenu()">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="hero" class="h-screen flex items-center justify-center relative overflow-hidden">
+        <video autoplay muted loop playsinline class="video-bg">
+            <source src="vid/hero1.mp4" type="video/mp4">
+        </video>
+        <div class="container mx-auto px-4 content-layer">
+            <div class="max-w-4xl mx-auto text-center space-y-12">
+                <h1 class="hero-text uppercase">
+                    We work fast.<br/>
+                    We think differently.<br/>
+                    We cut through the noise.
+                </h1>
+                <div class="flex justify-center">
+                    <a href="#contact" class="circle-button text-lg uppercase">
+                        Contact<br/>Us
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Mission Statement -->
+    <section id="mission" class="h-[100vh] flex items-center">
+        <div class="container mx-auto px-4">
+            <div class="max-w-6xl mx-auto space-y-8">
+                <p class="text-brand-pink text-2xl md:text-3xl uppercase">
+                    We don't just follow digital marketing trends — we sense them.
+                </p>
+                <p class="text-brand-pink text-2xl md:text-3xl uppercase">
+                    Eretic was born from the idea that good communication isn't about playing it safe — it's about standing out, staying true and making people feel something.
+                </p>
+                <p class="text-brand-green text-2xl md:text-3xl uppercase">
+                    Because every campaign, every piece of content, every interaction is crafted with intent—backed by psychology, data, and creative instinct. We don't waste time on empty engagement or forgettable ads. We create digital experiences that make people pause, react, and remember.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content Production Grid -->
+    <section id="services" class="h-[100vh] flex items-center bg-gray-950">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <!-- Card 1 -->
+                <div class="bg-black p-8 rounded-[3rem] flex flex-col service-card">
+                    <div class="text-brand-pink mb-6 h-12">
+                        <img src="img/picto1.png" alt="Icon 1" class="h-full w-auto">
+                    </div>
+                    <h3 class="text-xl mb-4 uppercase tracking-wide">CONTENT PRODUCTION</h3>
+                    <p class="text-gray-400 text-lg mb-6 leading-relaxed flex-grow">
+                        Crafting compelling, high-quality content backed by your brand's voice and vision. From photography and videography to graphic design and written word, we produce content that Captivates and converts.
+                    </p>
+                    <button onclick="openModal('Content Production', 'Full-service content creation including photography, videography, graphic design, and copywriting. We create content that resonates with your audience and drives engagement.', ['Photography', 'Videography', 'Graphic Design', 'Copywriting', 'Social Media'])" class="circle-button small text-lg uppercase border-2 border-white hover:bg-white hover:text-black self-center">
+                        More
+                    </button>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="bg-black p-8 rounded-[3rem] flex flex-col service-card">
+                    <div class="text-brand-pink mb-6 h-12">
+                        <img src="img/picto2.png" alt="Icon 2" class="h-full w-auto">
+                    </div>
+                    <h3 class="text-xl mb-4 uppercase tracking-wide">STRATEGY & PLANNING</h3>
+                    <p class="text-gray-400 text-lg mb-6 leading-relaxed flex-grow">
+                        Strategic planning and execution for digital campaigns that drive results. We combine data-driven insights with creative thinking to develop winning strategies.
+                    </p>
+                    <button onclick="openModal('Strategy & Planning', 'Comprehensive digital strategy development including market research, competitor analysis, and campaign planning. We help you navigate the digital landscape and achieve your goals.', ['Digital Strategy', 'Market Research', 'Campaign Planning', 'Analytics', 'ROI Optimization'])" class="circle-button small text-lg uppercase border-2 border-white hover:bg-white hover:text-black self-center">
+                        More
+                    </button>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="bg-black p-8 rounded-[3rem] flex flex-col service-card">
+                    <div class="text-brand-pink mb-6 h-12">
+                        <img src="img/picto3.png" alt="Icon 3" class="h-full w-auto">
+                    </div>
+                    <h3 class="text-xl mb-4 uppercase tracking-wide">SOCIAL MEDIA MANAGEMENT</h3>
+                    <p class="text-gray-400 text-lg mb-6 leading-relaxed flex-grow">
+                        End-to-end social media management that builds communities and drives engagement. We handle everything from content creation to community management.
+                    </p>
+                    <button onclick="openModal('Social Media Management', 'Complete social media management services including content creation, community management, and performance tracking. We help you build and maintain a strong social media presence.', ['Community Management', 'Content Calendar', 'Engagement', 'Analytics', 'Platform Strategy'])" class="circle-button small text-lg uppercase border-2 border-white hover:bg-white hover:text-black self-center">
+                        More
+                    </button>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="bg-black p-8 rounded-[3rem] flex flex-col service-card">
+                    <div class="text-brand-pink mb-6 h-12">
+                        <img src="img/picto4.png" alt="Icon 4" class="h-full w-auto">
+                    </div>
+                    <h3 class="text-xl mb-4 uppercase tracking-wide">CREATIVE DIRECTION</h3>
+                    <p class="text-gray-400 text-lg mb-6 leading-relaxed flex-grow">
+                        Creative direction that sets your brand apart. We develop unique visual identities and creative strategies that make your brand memorable.
+                    </p>
+                    <button onclick="openModal('Creative Direction', 'Innovative creative direction services including brand identity development, visual storytelling, and creative strategy. We help you stand out in a crowded digital space.', ['Brand Identity', 'Visual Storytelling', 'Art Direction', 'Creative Strategy', 'Brand Guidelines'])" class="circle-button small text-lg uppercase border-2 border-white hover:bg-white hover:text-black self-center">
+                        More
+                    </button>
+                </div>
+            </div>            
+        </div>
+    </section>
+
+    
+    <!-- Team Banner -->
+    <section id="team" class="h-screen bg-brand-pink flex items-center justify-center relative overflow-hidden">
+        <video autoplay muted loop playsinline class="video-bg">
+            <source src="vid/hero2.mp4" type="video/mp4">
+        </video>
+        <div class="container mx-auto px-4 content-layer">
+            <div class="flex flex-col items-center space-y-12">
+                <h2 class="hero-text text-center uppercase max-w-4xl">
+                    We don't do hierarchy.<br/>
+                    We do flow — every project rearranges<br/>
+                    us into whatever shape fits best.
+                </h2>
+                <a href="#team-grid" class="circle-button text-lg uppercase">
+                    Meet<br/>The Team
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Team Grid -->
+    <section id="team-grid" class="min-h-screen py-20">
+        <div class="container mx-auto px-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
+                <!-- Alecu -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Alecu.png" alt="Alecu" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Alecu</h3>
+                            <p class="text-brand-pink mb-4">Creative Director</p>
+                            <p class="text-sm text-gray-400 mb-4">Crafting innovative digital experiences</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ioana -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Ioana.png" alt="Ioana" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Ioana</h3>
+                            <p class="text-brand-pink mb-4">Art Director</p>
+                            <p class="text-sm text-gray-400 mb-4">Bringing creative visions to life</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bogdan -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Bogdan.png" alt="Bogdan" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Bogdan</h3>
+                            <p class="text-brand-pink mb-4">Technical Lead</p>
+                            <p class="text-sm text-gray-400 mb-4">Building the future of digital</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cristina -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Cristina.png" alt="Cristina" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Cristina</h3>
+                            <p class="text-brand-pink mb-4">Strategy Director</p>
+                            <p class="text-sm text-gray-400 mb-4">Shaping strategic narratives</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cătălina -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Cătălina.png" alt="Cătălina" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Cătălina</h3>
+                            <p class="text-brand-pink mb-4">Design Lead</p>
+                            <p class="text-sm text-gray-400 mb-4">Creating impactful visual stories</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ella -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Ella.png" alt="Ella" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Ella</h3>
+                            <p class="text-brand-pink mb-4">Content Strategist</p>
+                            <p class="text-sm text-gray-400 mb-4">Crafting engaging narratives</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gonza -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Gonza.png" alt="Gonza" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Gonza</h3>
+                            <p class="text-brand-pink mb-4">Motion Designer</p>
+                            <p class="text-sm text-gray-400 mb-4">Bringing ideas to life through motion</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gămu -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Gămu.png" alt="Gămu" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Gămu</h3>
+                            <p class="text-brand-pink mb-4">Creative Developer</p>
+                            <p class="text-sm text-gray-400 mb-4">Pushing technical boundaries</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mădălina -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Mădălina.png" alt="Mădălina" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Mădălina</h3>
+                            <p class="text-brand-pink mb-4">UX Designer</p>
+                            <p class="text-sm text-gray-400 mb-4">Designing seamless experiences</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sabrina -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Sabrina.png" alt="Sabrina" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Sabrina</h3>
+                            <p class="text-brand-pink mb-4">Brand Strategist</p>
+                            <p class="text-sm text-gray-400 mb-4">Developing brand identities</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shini -->
+                <div class="team-card">
+                    <div class="team-card-inner">
+                        <div class="team-card-front">
+                            <img src="img/echipa/Shini.png" alt="Shini" class="w-full h-full object-cover rounded-[3rem]">
+                        </div>
+                        <div class="team-card-back">
+                            <h3 class="text-xl uppercase mb-2">Shini</h3>
+                            <p class="text-brand-pink mb-4">Digital Artist</p>
+                            <p class="text-sm text-gray-400 mb-4">Creating digital masterpieces</p>
+                            <p class="text-sm text-gray-400"><span class="text-brand-green">In action:</span> lorem ipsum dolor</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    
+    <!-- Minds Statement Banner -->
+    <section id="mindsStatement" class="h-screen flex items-center justify-center relative overflow-hidden">
+        <video autoplay muted loop playsinline class="video-bg">
+            <source src="vid/hero3.mp4" type="video/mp4">
+        </video>
+        <div class="container mx-auto px-4 content-layer">
+            <div class="max-w-6xl mx-auto grid grid-cols-12 gap-8">
+                <!-- First Row - Headline -->
+                <div class="col-span-12 space-y-4">
+                    <h2 class="hero-text uppercase">Eretic Minds</h2>
+                </div>
+
+                <!-- Second Row - Main Content -->
+                <div class="col-span-7 space-y-8">
+                    <p class="text-2xl md:text-3xl uppercase text-brand-pink">Some teams work together. We sync brains.</p>
+                    <p class="text-2xl md:text-3xl text-brand-pink uppercase">
+                        What happens here isn't just collaboration — it's integration.
+                    </p>
+
+                    <p class="text-2xl md:text-3xl">
+                        We're photographers, psychologists, composers, designers, data analysts, writers, videographers, and project managers — but no one really fits into a job title.
+                    </p>
+
+                    <p class="text-2xl md:text-3xl">
+                        We're restless minds with different crafts, orbiting around the same obsession:
+                    </p>
+
+                    <p class="text-2xl md:text-3xl">
+                        Making brands desirable in the social space.
+                    </p>
+                </div>
+
+                <!-- Second Row - Green Statements -->
+                <div class="col-span-5 flex items-start text-center">
+                    <div class="space-y-8 text-brand-green border-2 border-brand-green rounded-[3rem] p-12 flex flex-col items-center justify-center">
+                        <p class="text-2xl md:text-3xl uppercase">No algorhythms without instincts.</p>
+                        <p class="text-2xl md:text-3xl uppercase">No art without data.</p>
+                        <p class="text-2xl md:text-3xl uppercase">No content without intention.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form Section -->
+    <section id="contact" class="min-h-screen py-20">
+        <div class="container mx-auto px-4">
+            <div class="max-w-2xl mx-auto">
+                <h2 class="hero-text uppercase mb-12 text-center">Get in Touch</h2>
+                <form class="space-y-8">
+                    <div class="space-y-8">
+                        <div>
+                            <label class="block text-lg uppercase mb-2 text-center">Name</label>
+                            <input type="text" class="w-full max-w-2xl mx-auto bg-gray-900 rounded-[3rem] px-6 py-4 text-lg focus:outline-none focus:bg-gray-800 block text-center">
+                        </div>
+                        <div>
+                            <label class="block text-lg uppercase mb-2 text-center">Email</label>
+                            <input type="email" class="w-full max-w-2xl mx-auto bg-gray-900 rounded-[3rem] px-6 py-4 text-lg focus:outline-none focus:bg-gray-800 block text-center">
+                        </div>
+                        <div>
+                            <label class="block text-lg uppercase mb-2 text-center">Message</label>
+                            <textarea rows="6" class="w-full max-w-2xl mx-auto bg-gray-900 rounded-[3rem] px-6 py-4 text-lg focus:outline-none focus:bg-gray-800 block text-center"></textarea>
+                        </div>
+                    </div>
+                    <div class="flex justify-center">
+                        <button type="submit" class="circle-button text-lg uppercase border-2 border-white hover:bg-white hover:text-black">
+                            Send<br/>Message
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+</body>
+</html> 
